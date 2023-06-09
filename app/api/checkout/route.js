@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-export async function POST(request) {
-  // if (request.method !== 'POST') { return res.sendStatus(405) }
+export const POST = async (request) => {
   const body = await request.json();
-  console.log(request.body)
 
   if (body.lineItems.length === 0) {
     return new Response("Error", {
@@ -14,21 +12,24 @@ export async function POST(request) {
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET ?? "", {
-      apiVersion: "2020-08-27",
+      apiVersion: "2022-11-15",
     });
 
     const session = await stripe.checkout.sessions.create({
       success_url: "http://localhost:3000/success",
       cancel_url: "http://localhost:3000/cancel",
       line_items: body.lineItems,
-      mode: "payment",
+      mode: "subscription", // Update the mode to 'subscription' if using recurring prices, or 'payment' if using one-time prices
     });
+
     return NextResponse.json({ session });
-  } catch (err) {
+  } catch (error) {
     console.log("BROKED");
-    console.log(err);
+    console.log(error);
     return new Response("Error", {
       status: 405,
     });
   }
-}
+};
+
+export default POST;
